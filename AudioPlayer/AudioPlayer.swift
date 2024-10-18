@@ -35,26 +35,26 @@ class AudioPlayer: AudioPlayerProtocol {
     func updateNowPlayingInfo() {
         guard let playableItem else { return }
         var nowPlayingInfo = [String: Any]()
-        
+
         nowPlayingInfo[MPMediaItemPropertyTitle] = playableItem.title
         nowPlayingInfo[MPMediaItemPropertyArtist] = playableItem.artist
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = player.rate
         nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
-        
+
         if let imageURL = playableItem.image {
-            URLSession.shared.dataTask(with: imageURL) { (data, response, error) in
+            URLSession.shared.dataTask(with: imageURL) { (data, _, error) in
                 if let error = error {
                     print("Error loading image: \(error.localizedDescription)")
                     return
                 }
-                
+
                 guard let data = data, let artworkImage = UIImage(data: data) else {
                     print("Failed to convert data to UIImage")
                     return
                 }
-                
+
                 let artwork = MPMediaItemArtwork(boundsSize: artworkImage.size) { _ in artworkImage }
-                
+
                 DispatchQueue.main.async {
                     nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
                     MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
@@ -96,7 +96,7 @@ class AudioPlayer: AudioPlayerProtocol {
         player.seek(to: .zero)
         playbackStatePublisher.send(.stopped)
     }
-    
+
     func pause() {
         player.pause()
     }
@@ -121,7 +121,7 @@ class AudioPlayer: AudioPlayerProtocol {
             player.replaceCurrentItem(with: nil)
         }
     }
-    
+
     func enqueue(_ item: any PlayableItemProtocol) {
         queue.enqueue(item)
     }
@@ -168,7 +168,7 @@ class AudioPlayer: AudioPlayerProtocol {
         guard let userInfo = notification.userInfo,
               let interruptionTypeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
               let interruptionType = AVAudioSession.InterruptionType(rawValue: interruptionTypeValue) else { return }
-        
+
         switch interruptionType {
         case .began:
             pause()
@@ -197,10 +197,10 @@ class AudioPlayer: AudioPlayerProtocol {
     // MARK: - PlayAction Enum
     enum PlayAction {
         case playNow
-        case PlayLater
-        case PlayAfter(items: Int)
-        case PlayUntil(time: TimeInterval)
-        case ReplacePlayableItem(with: any PlayableItemProtocol)
+        case playLater
+        case playAfter(items: Int)
+        case playUntil(time: TimeInterval)
+        case replacePlayableItem(with: any PlayableItemProtocol)
     }
 }
 
@@ -226,7 +226,7 @@ protocol AudioPlayerProtocol {
     func seekForward()
     func replace(_ withItem: (any PlayableItemProtocol)?)
     func enqueue(_ item: any PlayableItemProtocol)
-    func dequeue()  -> (Bool, (any PlayableItemProtocol)?)
+    func dequeue() -> (Bool, (any PlayableItemProtocol)?)
     var queue: Queue<any PlayableItemProtocol> { get }
     var playableItem: (any PlayableItemProtocol)? { get }
     var playbackStatePublisher: CurrentValueSubject<PlaybackState, Never> { get }
@@ -234,9 +234,9 @@ protocol AudioPlayerProtocol {
 
 // MARK: - PlayableItemProtocol
 protocol PlayableItemProtocol: Identifiable, Equatable {
-    var title : String { get }
-    var artist : String { get }
-    var image : URL? { get }
-    var streamURL : URL { get }
-    var id : UUID { get }
+    var title: String { get }
+    var artist: String { get }
+    var image: URL? { get }
+    var streamURL: URL { get }
+    var id: UUID { get }
 }

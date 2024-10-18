@@ -35,16 +35,6 @@
 			path = AudioPlayer;
 			sourceTree = "<group>";
 		};
-		AAF16DDF2CC2A6520035F9D0 /* AudioPlayerTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AudioPlayerTests;
-			sourceTree = "<group>";
-		};
-		AAF16DE92CC2A6520035F9D0 /* AudioPlayerUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AudioPlayerUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				AAF16DCE2CC2A6500035F9D0 /* AudioPlayer */,
-				AAF16DDF2CC2A6520035F9D0 /* AudioPlayerTests */,
-				AAF16DE92CC2A6520035F9D0 /* AudioPlayerUITests */,
 				AAF16DCD2CC2A6500035F9D0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -102,6 +90,7 @@
 				AAF16DC82CC2A6500035F9D0 /* Sources */,
 				AAF16DC92CC2A6500035F9D0 /* Frameworks */,
 				AAF16DCA2CC2A6500035F9D0 /* Resources */,
+				AAF16E252CC2F1300035F9D0 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -130,9 +119,6 @@
 			dependencies = (
 				AAF16DDE2CC2A6520035F9D0 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				AAF16DDF2CC2A6520035F9D0 /* AudioPlayerTests */,
-			);
 			name = AudioPlayerTests;
 			packageProductDependencies = (
 			);
@@ -152,9 +138,6 @@
 			);
 			dependencies = (
 				AAF16DE82CC2A6520035F9D0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				AAF16DE92CC2A6520035F9D0 /* AudioPlayerUITests */,
 			);
 			name = AudioPlayerUITests;
 			packageProductDependencies = (
@@ -230,6 +213,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		AAF16E252CC2F1300035F9D0 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nif command -v swiftlint >/dev/null 2>&1\nthen\n    swiftlint\nelse\n    echo \"warning: `swiftlint` command not found - See https://github.com/realm/SwiftLint#installation for installation instructions.\"\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AAF16DC82CC2A6500035F9D0 /* Sources */ = {
@@ -398,6 +403,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"AudioPlayer/Preview Content\"";
 				DEVELOPMENT_TEAM = 534SAT4S5S;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -427,6 +433,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"AudioPlayer/Preview Content\"";
 				DEVELOPMENT_TEAM = 534SAT4S5S;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

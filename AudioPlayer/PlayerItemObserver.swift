@@ -11,9 +11,8 @@ import Combine
 class PlayerItemObserver: Equatable {
     let publisher = PassthroughSubject<Bool, Never>()
     private var itemObservation: NSKeyValueObservation?
-    
     init(player: AVPlayer) {
-        itemObservation = player.observe(\.currentItem) { [weak self] player, change in
+        itemObservation = player.observe(\.currentItem) { [weak self] player, _ in
             guard let self = self else { return }
             self.publisher.send(player.currentItem != nil)
         }

@@ -13,10 +13,16 @@ class PlayerTimeObserver: Equatable {
     private weak var player: AVPlayer?
     private var timeObservation: Any?
     private var paused = false
-    
+
     init(player: AVPlayer) {
         self.player = player
-        timeObservation = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: nil) { [weak self] time in
+        timeObservation = player.addPeriodicTimeObserver(
+            forInterval: CMTime(
+                seconds: 0.5,
+                preferredTimescale: 600
+            ),
+            queue: nil
+        ) { [weak self] time in
             guard let self = self else { return }
             guard !self.paused else { return }
             self.publisher.send(time.seconds)
@@ -28,11 +34,11 @@ class PlayerTimeObserver: Equatable {
             player.removeTimeObserver(observer)
         }
     }
-    
+
     func pause(_ pause: Bool) {
         paused = pause
     }
-    
+
     static func == (lhs: PlayerTimeObserver, rhs: PlayerTimeObserver) -> Bool {
         return lhs.player === rhs.player
     }
