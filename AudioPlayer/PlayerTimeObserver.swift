@@ -8,7 +8,7 @@
 import AVFoundation
 import Combine
 
-class PlayerTimeObserver: Equatable {
+class PlayerElapsedTimeObserver: Equatable {
     let publisher = PassthroughSubject<TimeInterval, Never>()
     private weak var player: AVPlayer?
     private var timeObservation: Any?
@@ -39,7 +39,7 @@ class PlayerTimeObserver: Equatable {
         paused = pause
     }
 
-    static func == (lhs: PlayerTimeObserver, rhs: PlayerTimeObserver) -> Bool {
+    static func == (lhs: PlayerElapsedTimeObserver, rhs: PlayerElapsedTimeObserver) -> Bool {
         return lhs.player === rhs.player
     }
 }

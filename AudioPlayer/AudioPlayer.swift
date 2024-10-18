@@ -13,19 +13,20 @@ class AudioPlayer: AudioPlayerProtocol {
 
     // MARK: - Properties
     let playbackStatePublisher = CurrentValueSubject<PlaybackState, Never>(.waitingForSelection)
-    let player = AVPlayer()
-    var timeObserver: PlayerTimeObserver
-    var durationObserver: PlayerDurationObserver
+    public static let shared = AudioPlayer()
+    private let player = AVPlayer()
+    var elapsedTimeObserver: PlayerElapsedTimeObserver
+    var totalDurationObserver: PlayerTotalDurationObserver
     var itemObserver: PlayerItemObserver
     var playableItem: (any PlayableItemProtocol)?
-    internal var queue: Queue<any PlayableItemProtocol>
+    internal var queue: Queue<any PlayableItemProtocol> = .init()
 
     // MARK: - Initializer
-    init(playableItem: (any PlayableItemProtocol)? = nil, queue: Queue<any PlayableItemProtocol>) {
-        self.playableItem = playableItem
-        self.queue = queue
-        self.timeObserver = PlayerTimeObserver(player: player)
-        self.durationObserver = PlayerDurationObserver(player: player)
+    init() {
+//        self.playableItem = playableItem
+//        self.queue = queue
+        self.elapsedTimeObserver = PlayerElapsedTimeObserver(player: player)
+        self.totalDurationObserver = PlayerTotalDurationObserver(player: player)
         self.itemObserver = PlayerItemObserver(player: player)
         observeAudioInterruptions()
         observePlaybackProgression()
@@ -83,7 +84,8 @@ class AudioPlayer: AudioPlayerProtocol {
     }
 
     // MARK: - Playback Controls
-    func play() {
+    func play(item: any PlayableItemProtocol) {
+        replaceItem(with: item)
         player.play()
         configureAudioSession()
         updateNowPlayingInfo()
@@ -92,13 +94,19 @@ class AudioPlayer: AudioPlayerProtocol {
 
     func stop() {
         player.pause()
-        replace(nil)
+        replaceItem(with: nil)
         player.seek(to: .zero)
         playbackStatePublisher.send(.stopped)
     }
 
     func pause() {
         player.pause()
+        playbackStatePublisher.send(.paused)
+    }
+
+    func resume() {
+        player.play()
+        playbackStatePublisher.send(.playing)
     }
 
     func seekBackward() {
@@ -114,7 +122,7 @@ class AudioPlayer: AudioPlayerProtocol {
     }
 
     // MARK: - Queue Management
-    func replace(_ withItem: (any PlayableItemProtocol)?) {
+    func replaceItem(with withItem: (any PlayableItemProtocol)?) {
         if let withItem {
             player.replaceCurrentItem(with: makePlayableItem(withItem))
         } else {
@@ -147,8 +155,8 @@ class AudioPlayer: AudioPlayerProtocol {
     @objc private func playNextItem() {
         let (hasNext, nextItem) = dequeue()
         if hasNext, let nextItem = nextItem {
-            replace(nextItem)
-            play()
+            replaceItem(with: nextItem)
+            self.player.play() //TODO: check if we need to weak self
         } else {
             stop()
         }
@@ -183,8 +191,8 @@ class AudioPlayer: AudioPlayerProtocol {
     private func handleInterruptionEnded(with userInfo: [AnyHashable: Any]) {
         guard let interruptionOptionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
         let interruptionOptions = AVAudioSession.InterruptionOptions(rawValue: interruptionOptionsValue)
-        if interruptionOptions.contains(.shouldResume), playbackStatePublisher.value == .paused {
-            play()
+        if interruptionOptions.contains(.shouldResume), playbackStatePublisher.value == .paused { //TODO: check if we need to weak self
+            self.player.play()
             playbackStatePublisher.send(.playing)
         }
     }
@@ -218,13 +226,13 @@ enum PlaybackState: Int, Equatable {
 protocol AudioPlayerProtocol {
     func updateNowPlayingInfo()
     func makePlayableItem(_: any PlayableItemProtocol) -> AVPlayerItem
-    func play()
+    func play(item: any PlayableItemProtocol)
     func configureAudioSession()
     func pause()
     func stop()
     func seekBackward()
     func seekForward()
-    func replace(_ withItem: (any PlayableItemProtocol)?)
+    func replaceItem(with withItem: (any PlayableItemProtocol)?)
     func enqueue(_ item: any PlayableItemProtocol)
     func dequeue() -> (Bool, (any PlayableItemProtocol)?)
     var queue: Queue<any PlayableItemProtocol> { get }

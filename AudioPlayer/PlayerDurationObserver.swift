@@ -8,7 +8,7 @@
 import AVFoundation
 import Combine
 
-class PlayerDurationObserver: Equatable {
+class PlayerTotalDurationObserver: Equatable {
     let publisher = PassthroughSubject<TimeInterval, Never>()
     private var cancellable: AnyCancellable?
     init(player: AVPlayer) {
@@ -22,7 +22,7 @@ class PlayerDurationObserver: Equatable {
     deinit {
         cancellable?.cancel()
     }
-    static func == (lhs: PlayerDurationObserver, rhs: PlayerDurationObserver) -> Bool {
+    static func == (lhs: PlayerTotalDurationObserver, rhs: PlayerTotalDurationObserver) -> Bool {
         return lhs.cancellable === rhs.cancellable
     }
 }
