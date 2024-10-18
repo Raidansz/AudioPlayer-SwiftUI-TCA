@@ -14,13 +14,14 @@ class AudioPlayer: AudioPlayerProtocol {
     // MARK: - Properties
     let playbackStatePublisher = CurrentValueSubject<PlaybackState, Never>(.waitingForSelection)
     public static let shared = AudioPlayer()
-    private let player = AVPlayer()
+     let player = AVPlayer()
     var elapsedTimeObserver: PlayerElapsedTimeObserver
     var totalDurationObserver: PlayerTotalDurationObserver
     var itemObserver: PlayerItemObserver
-    var playableItem: (any PlayableItemProtocol)?
+//    var playableItem: (any PlayableItemProtocol)?
     internal var queue: Queue<any PlayableItemProtocol> = .init()
-
+    var cancellables: Set<AnyCancellable> = .init()
+    var elapsedTime: Double = .zero
     // MARK: - Initializer
     init() {
 //        self.playableItem = playableItem
@@ -30,17 +31,19 @@ class AudioPlayer: AudioPlayerProtocol {
         self.itemObserver = PlayerItemObserver(player: player)
         observeAudioInterruptions()
         observePlaybackProgression()
+        observingElapsedTime()
     }
 
     // MARK: - Now Playing Info
-    func updateNowPlayingInfo() {
-        guard let playableItem else { return }
+    func updateNowPlayingInfo(playableItem: any PlayableItemProtocol) {
         var nowPlayingInfo = [String: Any]()
 
         nowPlayingInfo[MPMediaItemPropertyTitle] = playableItem.title
         nowPlayingInfo[MPMediaItemPropertyArtist] = playableItem.artist
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = player.rate
         nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
+        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = player.currentItem?.duration.seconds
+
 
         if let imageURL = playableItem.image {
             URLSession.shared.dataTask(with: imageURL) { (data, _, error) in
@@ -88,8 +91,9 @@ class AudioPlayer: AudioPlayerProtocol {
         replaceItem(with: item)
         player.play()
         configureAudioSession()
-        updateNowPlayingInfo()
+        updateNowPlayingInfo(playableItem: item)
         playbackStatePublisher.send(.playing)
+        elapsedTimeObserver.pause(false)
     }
 
     func stop() {
@@ -97,16 +101,19 @@ class AudioPlayer: AudioPlayerProtocol {
         replaceItem(with: nil)
         player.seek(to: .zero)
         playbackStatePublisher.send(.stopped)
+        elapsedTimeObserver.pause(true)
     }
 
     func pause() {
         player.pause()
         playbackStatePublisher.send(.paused)
+        elapsedTimeObserver.pause(true)
     }
 
     func resume() {
         player.play()
         playbackStatePublisher.send(.playing)
+        elapsedTimeObserver.pause(false)
     }
 
     func seekBackward() {
@@ -121,6 +128,16 @@ class AudioPlayer: AudioPlayerProtocol {
         player.seek(to: newTime)
     }
 
+    func seek(to time: Double) {
+        self.elapsedTimeObserver.pause(true)
+        self.playbackStatePublisher.send(.buffering)
+        let targetTime = CMTime(seconds: time,
+                                preferredTimescale: 600)
+        player.seek(to: targetTime) { _ in
+            self.elapsedTimeObserver.pause(false)
+            self.playbackStatePublisher.send(.playing)
+        }
+    }
     // MARK: - Queue Management
     func replaceItem(with withItem: (any PlayableItemProtocol)?) {
         if let withItem {
@@ -162,6 +179,14 @@ class AudioPlayer: AudioPlayerProtocol {
         }
     }
 
+    func observingElapsedTime() {
+        elapsedTimeObserver.publisher.sink { [weak self] in
+            if let self {
+                self.elapsedTime = $0
+            }
+        }
+        .store(in: &cancellables)
+    }
     // MARK: - Audio Interruptions
     func observeAudioInterruptions() {
         NotificationCenter.default.addObserver(
@@ -224,7 +249,7 @@ enum PlaybackState: Int, Equatable {
 
 // MARK: - AudioPlayerProtocol
 protocol AudioPlayerProtocol {
-    func updateNowPlayingInfo()
+    func updateNowPlayingInfo(playableItem: (any PlayableItemProtocol))
     func makePlayableItem(_: any PlayableItemProtocol) -> AVPlayerItem
     func play(item: any PlayableItemProtocol)
     func configureAudioSession()
@@ -236,7 +261,7 @@ protocol AudioPlayerProtocol {
     func enqueue(_ item: any PlayableItemProtocol)
     func dequeue() -> (Bool, (any PlayableItemProtocol)?)
     var queue: Queue<any PlayableItemProtocol> { get }
-    var playableItem: (any PlayableItemProtocol)? { get }
+//    var playableItem: (any PlayableItemProtocol)? { get }
     var playbackStatePublisher: CurrentValueSubject<PlaybackState, Never> { get }
 }
 

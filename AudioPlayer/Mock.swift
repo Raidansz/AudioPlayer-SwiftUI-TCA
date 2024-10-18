@@ -28,7 +28,7 @@ class Episode: PlayableItemProtocol {
 }
 
 var episode: Episode {
-    .init(title: "Song", artist: "Author", streamURL: URL(string: imageurl1)!, id: UUID())
+    .init(title: "Song", artist: "Author", image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: imageurl1)!, id: UUID())
 }
 
 var episode2: Episode {

@@ -6,21 +6,39 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct ContentView: View {
     @State private var isPlaying: Bool = false
     @State private var currentTime: Double = 0
     @State private var totalTime: Double = 100
 
+    private func sliderEditingChanged(editingStarted: Bool) {
+        if editingStarted {
+            AudioPlayer.shared.elapsedTimeObserver.pause(true)
+        } else {
+            AudioPlayer.shared.seek(to: currentTime)
+        }
+    }
+
     var body: some View {
         VStack {
-            Slider(value: $currentTime, in: 0...totalTime)
+            Slider(value: $currentTime, in: 0...totalTime, onEditingChanged: sliderEditingChanged)
                 .padding()
                 .onReceive(AudioPlayer.shared.totalDurationObserver.publisher) { totalTime in
                     self.totalTime = totalTime
                 }
                 .onReceive(AudioPlayer.shared.elapsedTimeObserver.publisher) { currentTime in
                     self.currentTime = currentTime
+                }
+                .onReceive(AudioPlayer.shared.itemObserver.publisher) { hasAnItem in
+                    if hasAnItem {
+                        AudioPlayer.shared.playbackStatePublisher.send(.buffering)
+                    } else {
+                        AudioPlayer.shared.playbackStatePublisher.send(.waitingForSelection)
+                        self.currentTime = 0
+                        self.totalTime = 0
+                    }
                 }
 
             HStack {
