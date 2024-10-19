@@ -21,17 +21,18 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack {
-            List(episodes) { episode in
-                ListSongViewCell(episode: episode)
-                    .onTapGesture {
-                        AudioPlayer.shared.play(item: episode, action: .playNow)
-                        isPlaying = true
-                    }
-                    .listRowSeparator(.hidden)
-            }
-            .listStyle(.plain)
+        List(episodes) { episode in
+            ListSongViewCell(episode: episode)
+                .onTapGesture {
+                    AudioPlayer.shared.play(item: episode, action: .playNow)
+                    isPlaying = true
+                }
+                .frame(maxWidth: .infinity)
+                .listRowSeparator(.hidden)
+        }
+        .listStyle(.plain)
 
+        VStack {
             Slider(value: $currentTime, in: 0...totalTime, onEditingChanged: sliderEditingChanged)
                 .padding()
                 .onReceive(AudioPlayer.shared.totalDurationObserver.publisher) { totalTime in
@@ -99,9 +100,7 @@ struct ContentView: View {
                 }
                 .disabled(!isPlaying)
             }
-            .padding(.horizontal)
         }
-        .padding()
     }
 
     private func formatTime(seconds: Double) -> String {
