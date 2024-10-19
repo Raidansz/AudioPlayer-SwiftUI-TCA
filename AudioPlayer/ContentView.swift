@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import AVFoundation
 
 struct ContentView: View {
     @State private var isPlaying: Bool = false
@@ -64,7 +63,7 @@ struct ContentView: View {
                     switch AudioPlayer.shared.playbackStatePublisher.value {
                     case .waitingForSelection:
                         isPlaying = true
-                        AudioPlayer.shared.play(item: episode)
+                        AudioPlayer.shared.play(item: episode, action: .playNow)
                     case .playing:
                         isPlaying = false
                         AudioPlayer.shared.pause()

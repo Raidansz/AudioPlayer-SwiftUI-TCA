@@ -18,14 +18,12 @@ class AudioPlayer: AudioPlayerProtocol {
     var elapsedTimeObserver: PlayerElapsedTimeObserver
     var totalDurationObserver: PlayerTotalDurationObserver
     var itemObserver: PlayerItemObserver
-//    var playableItem: (any PlayableItemProtocol)?
+    var playableItem: (any PlayableItemProtocol)? // the last dequeued item
     internal var queue: Queue<any PlayableItemProtocol> = .init()
     var cancellables: Set<AnyCancellable> = .init()
     var elapsedTime: Double = .zero
     // MARK: - Initializer
     init() {
-//        self.playableItem = playableItem
-//        self.queue = queue
         self.elapsedTimeObserver = PlayerElapsedTimeObserver(player: player)
         self.totalDurationObserver = PlayerTotalDurationObserver(player: player)
         self.itemObserver = PlayerItemObserver(player: player)
@@ -35,7 +33,9 @@ class AudioPlayer: AudioPlayerProtocol {
     }
 
     // MARK: - Now Playing Info
-    func updateNowPlayingInfo(playableItem: any PlayableItemProtocol) {
+    func updateNowPlayingInfo(playableItem: (any PlayableItemProtocol)?) {
+        guard let playableItem else { return }
+
         var nowPlayingInfo = [String: Any]()
 
         nowPlayingInfo[MPMediaItemPropertyTitle] = playableItem.title
@@ -43,7 +43,6 @@ class AudioPlayer: AudioPlayerProtocol {
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = player.rate
         nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
         nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = player.currentItem?.duration.seconds
-
 
         if let imageURL = playableItem.image {
             URLSession.shared.dataTask(with: imageURL) { (data, _, error) in
@@ -86,19 +85,56 @@ class AudioPlayer: AudioPlayerProtocol {
         print("Handling audio session error: \(error)")
     }
 
+    func configureRemoteCommandCenter() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+        commandCenter.playCommand.addTarget { [weak self] _ in
+            self?.resume()
+            return .success
+        }
+
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
+            self?.pause()
+            return .success
+        }
+
+        commandCenter.nextTrackCommand.addTarget { [weak self] _ in
+            self?.seekForward()
+            return .success
+        }
+
+        commandCenter.previousTrackCommand.addTarget { [weak self] _ in
+            self?.seekBackward()
+            return .success
+        }
+    }
     // MARK: - Playback Controls
-    func play(item: any PlayableItemProtocol) {
-        replaceItem(with: item)
-        player.play()
-        configureAudioSession()
-        updateNowPlayingInfo(playableItem: item)
-        playbackStatePublisher.send(.playing)
-        elapsedTimeObserver.pause(false)
+    func play(item: any PlayableItemProtocol, action: PlayAction) {
+        switch action {
+        case .playNow:
+            playableItem = item
+            replaceRunningItem(with: playableItem)
+            player.play()
+            configureAudioSession()
+            configureRemoteCommandCenter()
+            updateNowPlayingInfo(playableItem: playableItem)
+            playbackStatePublisher.send(.playing)
+            elapsedTimeObserver.pause(false)
+        case .playLater:
+            break
+        case .playAfterRunningItem(item: let item):
+            enqueue(item)
+        case .playUntil(time: let time):
+            break
+        case .replacePlayableItem(with: let withItem):
+            stop()
+            play(item: withItem, action: .playNow)
+        }
     }
 
     func stop() {
         player.pause()
-        replaceItem(with: nil)
+        replaceRunningItem(with: nil)
+        playableItem = nil
         player.seek(to: .zero)
         playbackStatePublisher.send(.stopped)
         elapsedTimeObserver.pause(true)
@@ -133,13 +169,13 @@ class AudioPlayer: AudioPlayerProtocol {
         self.playbackStatePublisher.send(.buffering)
         let targetTime = CMTime(seconds: time,
                                 preferredTimescale: 600)
-        player.seek(to: targetTime) { _ in
-            self.elapsedTimeObserver.pause(false)
-            self.playbackStatePublisher.send(.playing)
+        player.seek(to: targetTime) { [weak self] _ in
+            self?.elapsedTimeObserver.pause(false)
+            self?.playbackStatePublisher.send(.playing)
         }
     }
     // MARK: - Queue Management
-    func replaceItem(with withItem: (any PlayableItemProtocol)?) {
+    func replaceRunningItem(with withItem: (any PlayableItemProtocol)?) {
         if let withItem {
             player.replaceCurrentItem(with: makePlayableItem(withItem))
         } else {
@@ -172,8 +208,8 @@ class AudioPlayer: AudioPlayerProtocol {
     @objc private func playNextItem() {
         let (hasNext, nextItem) = dequeue()
         if hasNext, let nextItem = nextItem {
-            replaceItem(with: nextItem)
-            self.player.play() //TODO: check if we need to weak self
+            replaceRunningItem(with: nextItem)
+            player.play()
         } else {
             stop()
         }
@@ -216,8 +252,8 @@ class AudioPlayer: AudioPlayerProtocol {
     private func handleInterruptionEnded(with userInfo: [AnyHashable: Any]) {
         guard let interruptionOptionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
         let interruptionOptions = AVAudioSession.InterruptionOptions(rawValue: interruptionOptionsValue)
-        if interruptionOptions.contains(.shouldResume), playbackStatePublisher.value == .paused { //TODO: check if we need to weak self
-            self.player.play()
+        if interruptionOptions.contains(.shouldResume), playbackStatePublisher.value == .paused {
+            player.play()
             playbackStatePublisher.send(.playing)
         }
     }
@@ -227,14 +263,7 @@ class AudioPlayer: AudioPlayerProtocol {
         AVPlayerItem(url: playableItem.streamURL)
     }
 
-    // MARK: - PlayAction Enum
-    enum PlayAction {
-        case playNow
-        case playLater
-        case playAfter(items: Int)
-        case playUntil(time: TimeInterval)
-        case replacePlayableItem(with: any PlayableItemProtocol)
-    }
+   
 }
 
 // MARK: - PlaybackState Enum
@@ -247,21 +276,29 @@ enum PlaybackState: Int, Equatable {
     case waitingForConnection
 }
 
+// MARK: - PlayAction Enum
+enum PlayAction {
+    case playNow
+    case playLater
+    case playAfterRunningItem(item: any PlayableItemProtocol)
+    case playUntil(time: TimeInterval)
+    case replacePlayableItem(with: any PlayableItemProtocol)
+}
 // MARK: - AudioPlayerProtocol
 protocol AudioPlayerProtocol {
-    func updateNowPlayingInfo(playableItem: (any PlayableItemProtocol))
+    func updateNowPlayingInfo(playableItem: (any PlayableItemProtocol)?)
     func makePlayableItem(_: any PlayableItemProtocol) -> AVPlayerItem
-    func play(item: any PlayableItemProtocol)
+    func play(item: any PlayableItemProtocol, action: PlayAction)
     func configureAudioSession()
     func pause()
     func stop()
     func seekBackward()
     func seekForward()
-    func replaceItem(with withItem: (any PlayableItemProtocol)?)
+    func replaceRunningItem(with withItem: (any PlayableItemProtocol)?)
     func enqueue(_ item: any PlayableItemProtocol)
     func dequeue() -> (Bool, (any PlayableItemProtocol)?)
     var queue: Queue<any PlayableItemProtocol> { get }
-//    var playableItem: (any PlayableItemProtocol)? { get }
+    var playableItem: (any PlayableItemProtocol)? { get }
     var playbackStatePublisher: CurrentValueSubject<PlaybackState, Never> { get }
 }
 
