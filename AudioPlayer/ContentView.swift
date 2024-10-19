@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct ContentView: View {
     @State private var isPlaying: Bool = false
@@ -35,12 +36,13 @@ struct ContentView: View {
         VStack {
             Slider(value: $currentTime, in: 0...totalTime, onEditingChanged: sliderEditingChanged)
                 .padding()
-                .onReceive(AudioPlayer.shared.totalDurationObserver.publisher) { totalTime in
-                    self.totalTime = totalTime
-                }
-                .onReceive(AudioPlayer.shared.elapsedTimeObserver.publisher) { currentTime in
-                    self.currentTime = currentTime
-                }
+                .onReceive(
+                    Publishers.CombineLatest(
+                        AudioPlayer.shared.totalDurationObserver.publisher,
+                        AudioPlayer.shared.elapsedTimeObserver.publisher)) { totalTime, currentTime in
+                            self.totalTime = totalTime
+                            self.currentTime = currentTime
+                        }
 
             HStack {
                 Text(formatTime(seconds: currentTime))
