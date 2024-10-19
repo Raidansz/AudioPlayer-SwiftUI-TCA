@@ -28,14 +28,15 @@ class Episode: PlayableItemProtocol {
 }
 
 var episode: Episode {
-    .init(title: "Song", artist: "Author", image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: imageurl1)!, id: UUID())
+    .init(title: "Song", artist: "Author", image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL1)!, id: UUID())
 }
 
 var episode2: Episode {
-    .init(title: "Song2", artist: "Author2", streamURL: URL(string: imageurl2)!, id: UUID())
+    .init(title: "Song2", artist: "Author2",image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL2)!, id: UUID())
 }
 
-public let imageurl1 = "https://op3.dev/e,pg=e85a9a88-0ddf-5f39-9cc8-49d74fd9d96b/https://d12wklypp119aj.cloudfront.net/track/86d38d9a-2f4b-44ae-a77f-a72e034f6d54.mp3"
+let episodes = [episode, episode2]
 
+public let streamURL1 = "https://op3.dev/e,pg=e85a9a88-0ddf-5f39-9cc8-49d74fd9d96b/https://d12wklypp119aj.cloudfront.net/track/86d38d9a-2f4b-44ae-a77f-a72e034f6d54.mp3"
 
-public let imageurl2 = "https://op3.dev/e,pg=81cfe3db-0b34-52d6-835c-61a3510bea82/https://d12wklypp119aj.cloudfront.net/track/0cada75d-2986-4960-8c0d-b3309367b97b.mp3"
+public let streamURL2 = "https://op3.dev/e,pg=81cfe3db-0b34-52d6-835c-61a3510bea82/https://d12wklypp119aj.cloudfront.net/track/0cada75d-2986-4960-8c0d-b3309367b97b.mp3"

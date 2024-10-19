@@ -14,7 +14,7 @@ class AudioPlayer: AudioPlayerProtocol {
     // MARK: - Properties
     let playbackStatePublisher = CurrentValueSubject<PlaybackState, Never>(.waitingForSelection)
     public static let shared = AudioPlayer()
-     let player = AVPlayer()
+    private let player = AVPlayer()
     var elapsedTimeObserver: PlayerElapsedTimeObserver
     var totalDurationObserver: PlayerTotalDurationObserver
     var itemObserver: PlayerItemObserver
@@ -262,8 +262,6 @@ class AudioPlayer: AudioPlayerProtocol {
     func makePlayableItem(_ playableItem: any PlayableItemProtocol) -> AVPlayerItem {
         AVPlayerItem(url: playableItem.streamURL)
     }
-
-   
 }
 
 // MARK: - PlaybackState Enum
