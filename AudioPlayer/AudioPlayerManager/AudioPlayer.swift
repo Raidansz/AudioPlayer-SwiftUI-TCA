@@ -9,11 +9,11 @@ import UIKit
 import MediaPlayer
 import Combine
 
-class AudioPlayer: AudioPlayerProtocol {
+final class AudioPlayer: Sendable, AudioPlayerProtocol {
 
     // MARK: - Properties
     let playbackStatePublisher = CurrentValueSubject<PlaybackState, Never>(.waitingForSelection)
-    public static let shared = AudioPlayer()
+    static let shared = AudioPlayer()
     private let player = AVPlayer()
     var elapsedTimeObserver: PlayerElapsedTimeObserver
     var totalDurationObserver: PlayerTotalDurationObserver
@@ -43,24 +43,16 @@ class AudioPlayer: AudioPlayerProtocol {
         nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = player.currentItem?.duration.seconds
 
         if let imageURL = playableItem.image {
-            URLSession.shared.dataTask(with: imageURL) { (data, _, error) in
-                if let error = error {
-                    print("Error loading image: \(error.localizedDescription)")
-                    return
-                }
-
-                guard let data = data, let artworkImage = UIImage(data: data) else {
+            Task {
+                let (data, _) = try await URLSession.shared.data(from: imageURL)
+                guard let artworkImage = UIImage(data: data) else {
                     print("Failed to convert data to UIImage")
                     return
                 }
-
                 let artwork = MPMediaItemArtwork(boundsSize: artworkImage.size) { _ in artworkImage }
-
-                DispatchQueue.main.async {
-                    nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
-                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                }
-            }.resume()
+                nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+                MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+            }
         } else {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
         }
@@ -121,7 +113,7 @@ class AudioPlayer: AudioPlayerProtocol {
             break
         case .playAfterRunningItem(item: let item):
             enqueue(item)
-        case .playUntil(time: let time):
+        case .playUntil(time: _):
             break
         case .replacePlayableItem(with: let withItem):
             stop()
@@ -169,8 +161,11 @@ class AudioPlayer: AudioPlayerProtocol {
             self.elapsedTimeObserver.pause(true)
             self.playbackStatePublisher.send(.buffering)
             player.seek(to: targetTime) { [weak self] _ in
-                self?.elapsedTimeObserver.pause(false)
-                self?.playbackStatePublisher.send(.playing)
+                guard let self else { return }
+                Task { @MainActor in
+                    self.elapsedTimeObserver.pause(false)
+                    self.playbackStatePublisher.send(.playing)
+                }
             }
         } else {
             player.seek(to: targetTime)
@@ -285,6 +280,7 @@ enum PlayAction {
     case replacePlayableItem(with: any PlayableItemProtocol)
 }
 // MARK: - AudioPlayerProtocol
+@MainActor
 protocol AudioPlayerProtocol {
     func updateNowPlayingInfo(playableItem: (any PlayableItemProtocol)?)
     func makePlayableItem(_: any PlayableItemProtocol) -> AVPlayerItem

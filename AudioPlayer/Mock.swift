@@ -1,3 +1,4 @@
+// swiftlint:disable all
 //
 //  Mock.swift
 //  AudioPlayer
@@ -32,10 +33,10 @@ var episode: Episode {
 }
 
 var episode2: Episode {
-    .init(title: "Song2", artist: "Author2",image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL2)!, id: UUID())
+    .init(title: "Song2", artist: "Author2", image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL2)!, id: UUID())
 }
 
-let episodes = [episode, episode2]
+@MainActor let episodes = [episode, episode2]
 
 public let streamURL1 = "https://op3.dev/e,pg=e85a9a88-0ddf-5f39-9cc8-49d74fd9d96b/https://d12wklypp119aj.cloudfront.net/track/86d38d9a-2f4b-44ae-a77f-a72e034f6d54.mp3"
 

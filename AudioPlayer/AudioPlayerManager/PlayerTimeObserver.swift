@@ -7,8 +7,8 @@
 
 import AVFoundation
 import Combine
-
-class PlayerElapsedTimeObserver: Equatable {
+@MainActor
+class PlayerElapsedTimeObserver {
     let publisher = PassthroughSubject<TimeInterval, Never>()
     private weak var player: AVPlayer?
     private var timeObservation: Any?
@@ -23,12 +23,21 @@ class PlayerElapsedTimeObserver: Equatable {
             ),
             queue: nil
         ) { [weak self] time in
-            guard let self = self else { return }
-            guard !self.paused else { return }
-            self.publisher.send(time.seconds)
+            Task { @MainActor in
+                guard let self = self else { return }
+                guard !self.paused else { return }
+                self.publisher.send(time.seconds)
+            }
         }
     }
     deinit {
+        // Since the only class that uses the PlayerElapsedTimeObserver is AudioPlayer, that only runs in the main thread, and it is final. So the deinit will always be called in the main thread
+        MainActor.assumeIsolated {
+            unsubscribe()
+        }
+    }
+
+    private func unsubscribe() {
         if let player = player,
            let observer = timeObservation {
             player.removeTimeObserver(observer)
@@ -37,9 +46,5 @@ class PlayerElapsedTimeObserver: Equatable {
 
     func pause(_ pause: Bool) {
         paused = pause
-    }
-
-    static func == (lhs: PlayerElapsedTimeObserver, rhs: PlayerElapsedTimeObserver) -> Bool {
-        return lhs.player === rhs.player
     }
 }
