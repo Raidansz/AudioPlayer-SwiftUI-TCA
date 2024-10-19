@@ -17,7 +17,6 @@ class AudioPlayer: AudioPlayerProtocol {
     private let player = AVPlayer()
     var elapsedTimeObserver: PlayerElapsedTimeObserver
     var totalDurationObserver: PlayerTotalDurationObserver
-    var itemObserver: PlayerItemObserver
     var playableItem: (any PlayableItemProtocol)? // the last dequeued item
     internal var queue: Queue<any PlayableItemProtocol> = .init()
     var cancellables: Set<AnyCancellable> = .init()
@@ -26,7 +25,6 @@ class AudioPlayer: AudioPlayerProtocol {
     init() {
         self.elapsedTimeObserver = PlayerElapsedTimeObserver(player: player)
         self.totalDurationObserver = PlayerTotalDurationObserver(player: player)
-        self.itemObserver = PlayerItemObserver(player: player)
         observeAudioInterruptions()
         observePlaybackProgression()
         observingElapsedTime()
@@ -164,14 +162,18 @@ class AudioPlayer: AudioPlayerProtocol {
         player.seek(to: newTime)
     }
 
-    func seek(to time: Double) {
-        self.elapsedTimeObserver.pause(true)
-        self.playbackStatePublisher.send(.buffering)
-        let targetTime = CMTime(seconds: time,
-                                preferredTimescale: 600)
-        player.seek(to: targetTime) { [weak self] _ in
-            self?.elapsedTimeObserver.pause(false)
-            self?.playbackStatePublisher.send(.playing)
+    func seek(to time: Double, playerStatus isPlaying: Bool) {
+        let targetTime = CMTime(seconds: time, preferredTimescale: 600)
+
+        if isPlaying {
+            self.elapsedTimeObserver.pause(true)
+            self.playbackStatePublisher.send(.buffering)
+            player.seek(to: targetTime) { [weak self] _ in
+                self?.elapsedTimeObserver.pause(false)
+                self?.playbackStatePublisher.send(.playing)
+            }
+        } else {
+            player.seek(to: targetTime)
         }
     }
     // MARK: - Queue Management

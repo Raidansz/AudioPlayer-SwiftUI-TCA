@@ -16,7 +16,7 @@ struct ContentView: View {
         if editingStarted {
             AudioPlayer.shared.elapsedTimeObserver.pause(true)
         } else {
-            AudioPlayer.shared.seek(to: currentTime)
+            AudioPlayer.shared.seek(to: currentTime, playerStatus: isPlaying)
         }
     }
 
@@ -41,15 +41,6 @@ struct ContentView: View {
                 .onReceive(AudioPlayer.shared.elapsedTimeObserver.publisher) { currentTime in
                     self.currentTime = currentTime
                 }
-                .onReceive(AudioPlayer.shared.itemObserver.publisher) { hasAnItem in
-                    if hasAnItem {
-                        AudioPlayer.shared.playbackStatePublisher.send(.buffering)
-                    } else {
-                        AudioPlayer.shared.playbackStatePublisher.send(.waitingForSelection)
-                        self.currentTime = 0
-                        self.totalTime = 0
-                    }
-                }
 
             HStack {
                 Text(formatTime(seconds: currentTime))
@@ -71,6 +62,7 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
+                    print(AudioPlayer.shared.playbackStatePublisher.value)
                     switch AudioPlayer.shared.playbackStatePublisher.value {
                     case .waitingForSelection:
                         isPlaying = true
