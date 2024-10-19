@@ -5,7 +5,7 @@
 
 **AudioPlayer** is a custom audio player built in Swift using `AVFoundation`, `Combine`, and `MediaPlayer`. It offers advanced audio playback capabilities, including background playback support, handling of interruptions like phone calls, and queue management for multiple audio items. Additionally, it provides real-time updates to the Now Playing Info Center, including track information such as title, artist, and artwork.
 
-The player features a flexible and modular design, allowing developers to enqueue and dequeue audio items, manage playback controls, and easily integrate with Combine to observe playback states. It’s designed for iOS applications that require a robust and scalable audio playback solution.
+The player features a flexible and modular design, allowing to enqueue and dequeue audio items, manage playback controls, and easily integrate with Combine to observe playback states. It’s designed for iOS applications that require a simple yet robust, scalable, and powerful audio playback solution.
 
 **Note: This project is still under active development.** Some features may be incomplete or subject to change as improvements are made.
 
