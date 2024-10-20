@@ -10,15 +10,15 @@ import Foundation
 
 class Episode: PlayableItemProtocol {
     var title: String
-    var artist: String
-    var image: URL?
+    var author: String
+    var imageUrl: URL?
     var streamURL: URL
-    var id: UUID
+    var id: String
 
-    init(title: String, artist: String, image: URL? = nil, streamURL: URL, id: UUID) {
+    init(title: String, author: String, imageUrl: URL? = nil, streamURL: URL, id: String) {
         self.title = title
-        self.artist = artist
-        self.image = image
+        self.author = author
+        self.imageUrl = imageUrl
         self.streamURL = streamURL
         self.id = id
     }
@@ -29,11 +29,11 @@ class Episode: PlayableItemProtocol {
 }
 
 var episode: Episode {
-    .init(title: "Song", artist: "Author", image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL1)!, id: UUID())
+    .init(title: "Song", author: "Author", imageUrl: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL1)!, id: "\(UUID())")
 }
 
 var episode2: Episode {
-    .init(title: "Song2", artist: "Author2", image: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL2)!, id: UUID())
+    .init(title: "Song2", author: "Author2", imageUrl: URL(string: "https://picsum.photos/200"), streamURL: URL(string: streamURL2)!, id: "\(UUID())")
 }
 
 @MainActor let episodes = [episode, episode2]

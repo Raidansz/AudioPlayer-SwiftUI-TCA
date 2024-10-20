@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 struct ContentView: View {
-    @State private var isPlaying: Bool = false
+    @State private var playerStatus: PlaybackState = .paused
     @State private var currentTime: Double = 0
     @State private var totalTime: Double = 100
 
@@ -17,7 +17,7 @@ struct ContentView: View {
         if editingStarted {
             AudioPlayer.shared.elapsedTimeObserver.pause(true)
         } else {
-            AudioPlayer.shared.seek(to: currentTime, playerStatus: isPlaying)
+            AudioPlayer.shared.seek(to: currentTime, playerStatus: playerStatus)
         }
     }
 
@@ -26,7 +26,7 @@ struct ContentView: View {
             ListSongViewCell(episode: episode)
                 .onTapGesture {
                     AudioPlayer.shared.play(item: episode, action: .playNow)
-                    isPlaying = true
+                    playerStatus = .playing
                 }
                 .frame(maxWidth: .infinity)
                 .listRowSeparator(.hidden)
@@ -59,7 +59,7 @@ struct ContentView: View {
                         .font(.system(size: 30))
                         .padding()
                 }
-                .disabled(!isPlaying)
+                .disabled(playerStatus == .paused)
 
                 Spacer()
 
@@ -67,19 +67,19 @@ struct ContentView: View {
                     print(AudioPlayer.shared.playbackStatePublisher.value)
                     switch AudioPlayer.shared.playbackStatePublisher.value {
                     case .waitingForSelection:
-                        isPlaying = true
+                        playerStatus = .playing
                         AudioPlayer.shared.play(item: episode, action: .playNow)
                     case .playing:
-                        isPlaying = false
+                        playerStatus = .paused
                         AudioPlayer.shared.pause()
                     case .paused:
                         AudioPlayer.shared.resume()
-                        isPlaying = true
+                        playerStatus = .playing
                     default:
                         break
                     }
                 } label: {
-                    Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                    Image(systemName: playerStatus == .playing ? "pause.circle.fill" : "play.circle.fill")
                         .font(.system(size: 50))
                         .padding()
                 }
@@ -92,7 +92,7 @@ struct ContentView: View {
                         .font(.system(size: 30))
                         .padding()
                 }
-                .disabled(!isPlaying)
+                .disabled(playerStatus == .paused)
             }
         }
     }

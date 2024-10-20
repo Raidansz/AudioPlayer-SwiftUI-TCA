@@ -12,7 +12,7 @@ struct ListSongViewCell: View {
     var body: some View {
         VStack {
             HStack(alignment: .top) {
-                AsyncImage(url: episode.image) { phase in
+                AsyncImage(url: episode.imageUrl) { phase in
                     if let image = phase.image {
                         image
                             .resizable()
@@ -41,7 +41,7 @@ struct ListSongViewCell: View {
                         .bold()
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(episode.artist)
+                    Text(episode.author)
                         .font(.subheadline)
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
