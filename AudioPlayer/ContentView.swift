@@ -7,17 +7,19 @@
 
 import SwiftUI
 import Combine
+import ComposableArchitecture
 
 struct ContentView: View {
+    @Bindable var store: StoreOf<AudioPlayerFeature>
     @State private var playerStatus: PlaybackState = .paused
     @State private var currentTime: Double = 0
     @State private var totalTime: Double = 100
 
     private func sliderEditingChanged(editingStarted: Bool) {
         if editingStarted {
-            AudioPlayer.shared.elapsedTimeObserver.pause(true)
+            store.isPlaying.send(.paused)
         } else {
-            AudioPlayer.shared.seek(to: currentTime, playerStatus: playerStatus)
+            store.send(.seekTo(time: currentTime))
         }
     }
 
@@ -25,7 +27,7 @@ struct ContentView: View {
         List(episodes) { episode in
             ListSongViewCell(episode: episode)
                 .onTapGesture {
-                    AudioPlayer.shared.play(item: episode, action: .playNow)
+                    store.send(.play(episode))
                     playerStatus = .playing
                 }
                 .frame(maxWidth: .infinity)
@@ -38,10 +40,13 @@ struct ContentView: View {
                 .padding()
                 .onReceive(
                     Publishers.CombineLatest(
-                        AudioPlayer.shared.totalDurationObserver.publisher,
-                        AudioPlayer.shared.elapsedTimeObserver.publisher)) { totalTime, currentTime in
+                        store.totalTimeObserver,
+                        store.elapsedTimeObserver)) { totalTime, currentTime in
                             self.totalTime = totalTime
                             self.currentTime = currentTime
+                        }
+                        .onReceive(store.isPlaying) { status in
+                            playerStatus = status
                         }
 
             HStack {
@@ -53,7 +58,7 @@ struct ContentView: View {
 
             HStack {
                 Button {
-                    AudioPlayer.shared.seekBackward()
+                    store.send(.seekBackward)
                 } label: {
                     Image(systemName: "gobackward.15")
                         .font(.system(size: 30))
@@ -64,17 +69,13 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
-                    print(AudioPlayer.shared.playbackStatePublisher.value)
-                    switch AudioPlayer.shared.playbackStatePublisher.value {
+                    switch playerStatus {
                     case .waitingForSelection:
-                        playerStatus = .playing
-                        AudioPlayer.shared.play(item: episode, action: .playNow)
+                        store.send(.play(episode))
                     case .playing:
-                        playerStatus = .paused
-                        AudioPlayer.shared.pause()
+                        store.send(.pause)
                     case .paused:
-                        AudioPlayer.shared.resume()
-                        playerStatus = .playing
+                        store.send(.resume)
                     default:
                         break
                     }
@@ -86,7 +87,7 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
-                    AudioPlayer.shared.seekForward()
+                    store.send(.seekForward)
                 } label: {
                     Image(systemName: "goforward.15")
                         .font(.system(size: 30))
@@ -102,8 +103,4 @@ struct ContentView: View {
         let seconds = Int(seconds) % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
-}
-
-#Preview {
-    ContentView()
 }
