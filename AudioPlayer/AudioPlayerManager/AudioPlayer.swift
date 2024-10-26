@@ -99,6 +99,11 @@ final class AudioPlayer: Sendable, AudioPlayerProtocol {
     }
     // MARK: - Playback Controls
     func play(item: any PlayableItemProtocol, action: PlayAction) {
+        SZLogInfo("Player was tapped")
+        SZLogInfo("Player was tapped")
+        SZLogInfo("Player was tapped")
+        SZLogInfo("Player was tapped")
+        SZLogInfo("Player was tapped")
         switch action {
         case .playNow:
             playableItem = item

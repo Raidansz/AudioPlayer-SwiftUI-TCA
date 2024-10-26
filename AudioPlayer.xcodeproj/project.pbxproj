@@ -103,7 +103,6 @@
 				AAF16DC82CC2A6500035F9D0 /* Sources */,
 				AAF16DC92CC2A6500035F9D0 /* Frameworks */,
 				AAF16DCA2CC2A6500035F9D0 /* Resources */,
-				AAF16E252CC2F1300035F9D0 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -191,6 +190,8 @@
 			);
 			mainGroup = AAF16DC32CC2A6500035F9D0;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AAF16DCD2CC2A6500035F9D0 /* Products */;
 			projectDirPath = "";
@@ -226,28 +227,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		AAF16E252CC2F1300035F9D0 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nif command -v swiftlint >/dev/null 2>&1\nthen\n    swiftlint\nelse\n    echo \"warning: `swiftlint` command not found - See https://github.com/realm/SwiftLint#installation for installation instructions.\"\nfi\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AAF16DC82CC2A6500035F9D0 /* Sources */ = {
