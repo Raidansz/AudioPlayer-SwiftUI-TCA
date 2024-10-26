@@ -8,11 +8,11 @@
 
 import Foundation
 
-class Episode: PlayableItemProtocol {
+final class Episode: PlayableItemProtocol, Sendable {
     var title: String
     var author: String
     var imageUrl: URL?
-    var streamURL: URL
+    var streamURL: URL?
     var id: String
 
     init(title: String, author: String, imageUrl: URL? = nil, streamURL: URL, id: String) {

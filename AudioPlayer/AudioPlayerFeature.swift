@@ -249,3 +249,12 @@ protocol PlayableItemProtocol: Identifiable, Equatable, Sendable {
     var streamURL: URL? { get }
     var id: String { get }
 }
+
+enum PlaybackState: Int, Equatable {
+    case waitingForSelection
+    case buffering
+    case playing
+    case paused
+    case stopped
+    case waitingForConnection
+}
