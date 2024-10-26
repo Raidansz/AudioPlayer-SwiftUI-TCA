@@ -63,6 +63,7 @@ struct AudioPlayerFeature: Sendable {
         case seekForward
         case seekBackward
         case seekTo(time: Double)
+        case updateStatus(PlaybackState)
         case pause
         case resume
         case enqueue(item: any PlayableItemProtocol)
@@ -119,11 +120,14 @@ struct AudioPlayerFeature: Sendable {
                 return .none
             case .pause:
                 state.player?.pause()
-                // update status
+                state.isPlaying.send(.paused)
                 return .none
             case .resume:
                 state.player?.play()
-                // update status
+                state.isPlaying.send(.playing)
+                return .none
+            case .updateStatus(let status):
+                state.isPlaying.send(status)
                 return .none
             }
         }
@@ -181,7 +185,7 @@ extension AudioPlayerFeature {
         }
 
         commandCenter.pauseCommand.addTarget { _ in
-            pause()
+           // pause()
             return .success
         }
 
@@ -231,13 +235,12 @@ extension AudioPlayerFeature {
 
     func seek(for state: inout State, to time: Double) {
         let targetTime = CMTime(seconds: time, preferredTimescale: 600)
-        if state.isPlaying.value == .playing {
-            state.isPlaying.send(.buffering)
-            state.player?.seek(to: targetTime) { [state] _ in
-                state.isPlaying.send(.playing)
-            }
-        } else {
+        if state.isPlaying.value == .paused {
             state.player?.seek(to: targetTime)
+        } else {
+            state.isPlaying.send(.buffering)
+            state.player?.seek(to: targetTime)
+            state.isPlaying.send(.playing)
         }
     }
 }

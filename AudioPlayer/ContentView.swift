@@ -11,13 +11,13 @@ import ComposableArchitecture
 
 struct ContentView: View {
     @Bindable var store: StoreOf<AudioPlayerFeature>
-    @State private var playerStatus: PlaybackState = .paused
+    @State private var playerStatus: PlaybackState = .waitingForSelection
     @State private var currentTime: Double = 0
     @State private var totalTime: Double = 100
 
     private func sliderEditingChanged(editingStarted: Bool) {
         if editingStarted {
-            store.isPlaying.send(.paused)
+            store.isPlaying.send(.buffering)
         } else {
             store.send(.seekTo(time: currentTime))
         }
@@ -47,6 +47,9 @@ struct ContentView: View {
                         }
                         .onReceive(store.isPlaying) { status in
                             playerStatus = status
+                            print(status)
+                            print("HHHeeere is the original \(store.isPlaying.value)")
+                            print("HHHeeere is the fake \(self.playerStatus)")
                         }
 
             HStack {
@@ -64,12 +67,14 @@ struct ContentView: View {
                         .font(.system(size: 30))
                         .padding()
                 }
-                .disabled(playerStatus == .paused)
+                .disabled(playerStatus != .playing)
 
                 Spacer()
 
                 Button {
+                    print("HHHeeere is the buttonnn \(store.isPlaying.value)")
                     switch playerStatus {
+                    
                     case .waitingForSelection:
                         store.send(.play(episode))
                     case .playing:
@@ -80,7 +85,7 @@ struct ContentView: View {
                         break
                     }
                 } label: {
-                    Image(systemName: playerStatus == .playing ? "pause.circle.fill" : "play.circle.fill")
+                    Image(systemName: playerStatus != .playing ? "play.circle.fill" : "pause.circle.fill")
                         .font(.system(size: 50))
                         .padding()
                 }
@@ -93,7 +98,7 @@ struct ContentView: View {
                         .font(.system(size: 30))
                         .padding()
                 }
-                .disabled(playerStatus == .paused)
+                .disabled(playerStatus != .playing)
             }
         }
     }
