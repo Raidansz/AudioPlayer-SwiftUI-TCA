@@ -17,10 +17,11 @@ struct AudioPlayerFeature: Sendable {
         var player: AVPlayer?
         var queue: Queue<any PlayableItemProtocol> = .init()
         var playableItem: (any PlayableItemProtocol)?
-        @ObservationStateIgnored var isPlaying = CurrentValueSubject<PlaybackState, Never>(.waitingForSelection)
-        @ObservationStateIgnored var elapsedTimeObserver = PassthroughSubject<Double, Never>()
         var elapsedTimeObservation: Any?
         @ObservationStateIgnored var totalTimeObserver = PassthroughSubject<TimeInterval, Never>()
+        @ObservationStateIgnored var isPlaying = CurrentValueSubject<PlaybackState, Never>(.waitingForSelection)
+
+        @ObservationStateIgnored var elapsedTimeObserver = PassthroughSubject<Double, Never>()
         private var timeObservation: Any?
         private var cancellable: AnyCancellable?
 
