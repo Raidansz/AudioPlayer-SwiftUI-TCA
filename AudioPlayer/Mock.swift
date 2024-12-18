@@ -8,14 +8,14 @@
 
 import Foundation
 
-final class Episode: PlayableItemProtocol, Sendable {
-    var title: String
-    var author: String
-    var imageUrl: URL?
-    var streamURL: URL?
-    var id: String
+public final class Episode: PlayableItemProtocol, Sendable {
+  public var title: String
+  public var author: String
+  public var imageUrl: URL?
+  public var streamURL: URL?
+  public var id: String
 
-    init(title: String, author: String, imageUrl: URL? = nil, streamURL: URL, id: String) {
+    public init(title: String, author: String, imageUrl: URL? = nil, streamURL: URL, id: String) {
         self.title = title
         self.author = author
         self.imageUrl = imageUrl
@@ -23,7 +23,7 @@ final class Episode: PlayableItemProtocol, Sendable {
         self.id = id
     }
 
-    static func == (lhs: Episode, rhs: Episode) -> Bool {
+    public static func == (lhs: Episode, rhs: Episode) -> Bool {
         lhs.id == rhs.id
     }
 }

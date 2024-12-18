@@ -16,11 +16,11 @@ struct ContentView: View {
     @State private var totalTime: Double = 100
 
     private func sliderEditingChanged(editingStarted: Bool) {
-        if editingStarted {
-            store.isPlaying.send(.buffering)
-        } else {
-            store.send(.seekTo(time: currentTime))
-        }
+//        if editingStarted {
+//            store.isPlaying.send(.buffering)
+//        } else {
+//            store.send(.seekTo(time: currentTime))
+//        }
     }
 
     var body: some View {
@@ -38,22 +38,22 @@ struct ContentView: View {
         VStack {
             Slider(value: $currentTime, in: 0...totalTime, onEditingChanged: sliderEditingChanged)
                 .padding()
-                .onReceive(
-                    Publishers.CombineLatest(
-                        store.totalTimeObserver,
-                        store.elapsedTimeObserver)) { totalTime, currentTime in
-                            self.totalTime = totalTime
-                            self.currentTime = currentTime
-                        }
-                        .onReceive(store.isPlaying) { status in
-                            playerStatus = status
-                            print(status)
-                            print("HHHeeere is the original \(store.isPlaying.value)")
-                            print("HHHeeere is the fake \(self.playerStatus)")
-                        }
+//                .onReceive(
+//                    Publishers.CombineLatest(
+//                        store.totalTimeObserver,
+//                        store.elapsedTimeObserver)) { totalTime, currentTime in
+//                            self.totalTime = totalTime
+//                            self.currentTime = currentTime
+//                        }
+//                        .onReceive(store.isPlaying) { status in
+//                            playerStatus = status
+//                            print(status)
+//                            print("HHHeeere is the original \(store.isPlaying.value)")
+//                            print("HHHeeere is the fake \(self.playerStatus)")
+//                        }
 
             HStack {
-                Text(formatTime(seconds: currentTime))
+                Text(formatTime(seconds: store.elapsedTime))
                 Spacer()
                 Text(formatTime(seconds: totalTime))
             }
@@ -72,7 +72,7 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
-                    print("HHHeeere is the buttonnn \(store.isPlaying.value)")
+                 //   print("HHHeeere is the buttonnn \(store.isPlaying.value)")
                     switch playerStatus {
                     
                     case .waitingForSelection:
