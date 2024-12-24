@@ -17,16 +17,12 @@ struct AudioPlayerFeature: Sendable {
         var queue: Queue<Episode> = .init()
         var playableItem: Episode?
         var elapsedTime: Double = 0
-        var totalTime: Double = 0
+        var totalTime: Double = 100
     }
-
+    
     @Dependency(\.audioPlayer) var audioPlayer
-
+    
     enum Action {
-        case updateNowPlayingInfo
-        case configureAudioSession
-        case configureRemoteCommandCenter
-
         case parsePlayableItem( Episode)
         case play(Episode?)
         case stop
@@ -35,101 +31,75 @@ struct AudioPlayerFeature: Sendable {
         case seekTo(time: Double)
         case updateStatus(PlaybackState)
         case pause
-        case resume
-        case enqueue(item: Episode)
-        case dequeue
+        case sliderEditingChanged(isEditingStarted: Bool, currentTime: Double)
         case replaceRunningItem(with: Episode)
         case updateElapsedTime(Double)
+        case updateTotalTime(Double)
     }
-
+    
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .updateNowPlayingInfo:
-                return .none
-            case .configureAudioSession:
-                return .none
-            case .configureRemoteCommandCenter:
-                return .none
             case .parsePlayableItem(let item):
                 return .none
             case .play(let item):
                 guard let item else { return .none }
                 return .run { send in
-                    let id = AudioPlayerClient.ID("hehe")
-
-                    // Start playback and get the PlayerAction stream
-                    let actions = await audioPlayer.play(id, item)
-
-                    // Fetch the total time of the item
-//                    let totalTime = await audioPlayer.totalTime(id)
-//                    await MainActor.run { state.totalTime = totalTime }
-
-                    // Observe elapsed time
-                    let timeUpdates = await audioPlayer.elapsedTimeUpdates(CMTime(seconds: 1, preferredTimescale: 1))
-//                    
-                    Task {
-                        for await currentTime in timeUpdates {
-                            await send(.updateElapsedTime(currentTime))
-                        }
-                    }
-                
-                    // Handle PlayerAction events
+                    
+                    let actions = await audioPlayer.play(AudioPlayerClient.ID("player"), item)
                     for await action in actions {
                         switch action {
+                        
                         case .didStart:
-                            print("Playback started")
-                          
+                            print("")
                         case .didPause:
-                            print("Playback paused")
-                          
+                            print("")
                         case .didResume:
-                            print("Playback resumed")
-                           
+                            print("")
                         case .didStop:
-                            print("Playback stopped")
-                           
-                        case .errorOccurred(let error):
-                            print("Playback error: \(error.localizedDescription)")
-                            // Optionally handle errors
+                            print("")
+                        case .errorOccurred(_):
+                            print("")
                         }
                     }
                 }
             case .stop:
-              //  stop(for: &state)
+                //  stop(for: &state)
                 return .none
             case .seekForward:
-                return .run { send in
-                    await audioPlayer.seekFifteenForward()
-                }
-              //  seekForward(for: &state)
+                //  seekForward(for: &state)
                 return .none
             case .seekBackward:
-             //   seekBackward(for: &state)
+                //   seekBackward(for: &state)
                 return .none
             case .seekTo(time: let time):
-              //  seek(for: &state, to: time)
-                return .none
-            case .enqueue(item: let item):
-              //  state.queue.enqueue(item)
-                return .none
-            case .dequeue:
-
+                //  seek(for: &state, to: time)
                 return .none
             case .replaceRunningItem(with: let withItem):
-
+                
                 return .none
             case .pause:
                 return .run { @MainActor _ in
                     await audioPlayer.pause()
                 }
-            case .resume:
-                return .none
             case .updateStatus(let status):
-
+                
                 return .none
             case .updateElapsedTime(let value):
                 state.elapsedTime = value
+                return .none
+            case .sliderEditingChanged(let editingStarted, let currentTime):
+                if editingStarted {
+                    //                    state.playbackState = .buffering
+                    return .none
+                } else {
+                    return .run { @MainActor send in
+                        await audioPlayer.seekTo(currentTime)
+                    }
+                }
+            case .updateTotalTime(let value):
+                print(value)
+                state.totalTime = value
                 return .none
             }
         }
@@ -150,5 +120,4 @@ enum PlaybackState: Int, Equatable {
     case playing
     case paused
     case stopped
-    case waitingForConnection
 }

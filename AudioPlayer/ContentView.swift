@@ -6,21 +6,14 @@
 //
 
 import SwiftUI
-import Combine
 import ComposableArchitecture
 
 struct ContentView: View {
     @Bindable var store: StoreOf<AudioPlayerFeature>
     @State private var playerStatus: PlaybackState = .waitingForSelection
-    @State private var currentTime: Double = 0
-    @State private var totalTime: Double = 100
 
     private func sliderEditingChanged(editingStarted: Bool) {
-//        if editingStarted {
-//            store.isPlaying.send(.buffering)
-//        } else {
-//            store.send(.seekTo(time: currentTime))
-//        }
+        store.send(.sliderEditingChanged(isEditingStarted: editingStarted, currentTime: store.elapsedTime))
     }
 
     var body: some View {
@@ -36,26 +29,13 @@ struct ContentView: View {
         .listStyle(.plain)
 
         VStack {
-            Slider(value: $currentTime, in: 0...totalTime, onEditingChanged: sliderEditingChanged)
+            Slider(value: $store.elapsedTime.sending(\.updateElapsedTime), in: 0...100, onEditingChanged: sliderEditingChanged)
                 .padding()
-//                .onReceive(
-//                    Publishers.CombineLatest(
-//                        store.totalTimeObserver,
-//                        store.elapsedTimeObserver)) { totalTime, currentTime in
-//                            self.totalTime = totalTime
-//                            self.currentTime = currentTime
-//                        }
-//                        .onReceive(store.isPlaying) { status in
-//                            playerStatus = status
-//                            print(status)
-//                            print("HHHeeere is the original \(store.isPlaying.value)")
-//                            print("HHHeeere is the fake \(self.playerStatus)")
-//                        }
 
             HStack {
                 Text(formatTime(seconds: store.elapsedTime))
                 Spacer()
-                Text(formatTime(seconds: totalTime))
+                Text(formatTime(seconds: store.totalTime))
             }
             .padding(.horizontal)
 
@@ -72,17 +52,13 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
-                 //   print("HHHeeere is the buttonnn \(store.isPlaying.value)")
                     switch playerStatus {
-                    
-                    case .waitingForSelection:
+                    case .waitingForSelection, .stopped:
                         store.send(.play(episode))
-                    case .playing:
+                    case .playing, .buffering:
                         store.send(.pause)
                     case .paused:
-                        store.send(.resume)
-                    default:
-                        break
+                       ()
                     }
                 } label: {
                     Image(systemName: playerStatus != .playing ? "play.circle.fill" : "pause.circle.fill")

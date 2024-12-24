@@ -38,6 +38,6 @@ public struct AudioPlayerClient : Sendable{
     public var seekFifteenForward: @Sendable () async -> Void
     public var seekTo: @Sendable (TimeInterval) async -> Void
     public var elapsedTime: @Sendable (_ id: ID) async -> TimeInterval = { _ in 0 }
-    public var totalTime: @Sendable (_ id: ID) async -> TimeInterval = { _ in 0 }
+    public var totalTime: @Sendable () async -> TimeInterval = { 0 }
     public var elapsedTimeUpdates: @Sendable (CMTime) async -> AsyncStream<TimeInterval> = { _ in .finished }
 }
